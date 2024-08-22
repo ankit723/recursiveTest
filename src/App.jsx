@@ -1,46 +1,83 @@
-import { useState } from 'react';
-import './App.css';
+import React, { useState } from 'react';
+const nestedData = [
+  {
+    id: 1,
+    label: "1",
+    children: [
+      {
+        id: 2,
+        label: "1.1",
+        children: [
+          { id: 3, label: "1.1.1" },
+          { id: 4, label: "1.1.2" }
+        ]
+      },
+      { id: 5, label: "1.2" }
+    ]
+  },
+  {
+    id: 6,
+    label: "2",
+    children: [
+      { id: 7, label: "2.1" }
+    ]
+  }
+];
 
-function App() {
-  const checkboxes = [1, [1, 2, [1, 2, 3], 4], 2];
-
-  const RecursiveCheckbox = ({ checkbox, isCheck }) => {
-    const [isChecked, setIsChecked] = useState(isCheck);
-    console.log(isChecked)
-
-    if (!Array.isArray(checkbox)) {
-      return (
-        <div>
+const CheckboxTree = ({ data, checkedItems, handleChange }) => {
+  return (
+    <ul>
+      {data.map((item) => (
+        <li key={item.id}>
           <input
             type="checkbox"
-            id={`checkbox-${checkbox}`}
-            checked={isChecked}
-            onChange={() => setIsChecked(!isChecked)}
+            checked={checkedItems.includes(item.id)}
+            onChange={() => handleChange(item)}
           />
-          <label htmlFor={`checkbox-${checkbox}`}>{checkbox}</label>
-        </div>
-      );
-    }
+          {item.label}
+          {item.children && item.children.length > 0 && (
+            <CheckboxTree
+              data={item.children}
+              checkedItems={checkedItems}
+              handleChange={handleChange}
+            />
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+};
 
-    return (
-      <>
-        {checkbox.map((box, index) => (
-          <div key={index} style={{ paddingLeft: '20px' }}>
-            {isChecked?
-              <RecursiveCheckbox checkbox={box} isCheck={true} />:
-              <RecursiveCheckbox checkbox={box} isCheck={false} />
-            }
-          </div>
-        ))}
-      </>
-    );
+const App = () => {
+  const [checkedItems, setCheckedItems] = useState([]);
+
+  const handleChange = (item) => {
+    const isChecked = checkedItems.includes(item.id);
+    const newCheckedItems = new Set(checkedItems);
+
+    const toggleItemAndChildren = (item) => {
+      if (isChecked) {
+        newCheckedItems.delete(item.id);
+      } else {
+        newCheckedItems.add(item.id);
+      }
+      item.children?.forEach(toggleItemAndChildren);
+    };
+
+    toggleItemAndChildren(item);
+    setCheckedItems(Array.from(newCheckedItems));
   };
 
   return (
     <div>
-      <RecursiveCheckbox checkbox={checkboxes} isCheck={false} />
+      <h1>Nested Checkbox List</h1>
+      <CheckboxTree
+        data={nestedData}
+        checkedItems={checkedItems}
+        handleChange={handleChange}
+      />
     </div>
   );
-}
+};
 
 export default App;
